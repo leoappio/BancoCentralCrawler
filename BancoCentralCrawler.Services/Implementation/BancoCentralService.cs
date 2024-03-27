@@ -17,21 +17,84 @@ public class BancoCentralService : IBancoCentralService
 
     public async Task<List<NoticiaDetalheResponseDto>> GetNewsByYearAsync(int year)
     {
-        var newsListing = await ObterResultadosListagemPorAnoAsync(year);
+        var newsListing = await GetNewsListingByYearAsync(year);
 
         var response = new List<NoticiaDetalheResponseDto>();
 
         foreach (var newsEvent in newsListing)
         {
-            var detalhe = await _bancoCentralWebScrapper.ObterDetalhe(newsEvent);
+            var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(newsEvent);
             
-            response.Add(detalhe);
+            response.Add(detail);
         }
 
         return response;
     }
-    
-    private async Task<List<NoticiaBancoCentralObtidaEvent>> ObterResultadosListagemNotas(int ano)
+
+    public async Task<List<NoticiaDetalheResponseDto>> GetPressReleasesByYearAsync(int year)
+    {
+        var newsListing = await GetPressReleasesListingByYearAsync(year);
+
+        var response = new List<NoticiaDetalheResponseDto>();
+
+        foreach (var newsEvent in newsListing)
+        {
+            var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(newsEvent);
+            
+            response.Add(detail);
+        }
+
+        return response;
+    }
+
+    public async Task<List<NoticiaDetalheResponseDto>> GetAllPressReleasesAsync()
+    {
+        var response = new List<NoticiaDetalheResponseDto>();
+
+        for (var year = 2000; year <= DateTime.Now.Year; year++)
+        {
+            var newsListing = await GetPressReleasesListingByYearAsync(year);
+            
+            foreach (var newsEvent in newsListing)
+            {
+                var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(newsEvent);
+            
+                response.Add(detail);
+            }
+        }
+        return response;
+    }
+
+    public async Task<List<NoticiaDetalheResponseDto>> GetAllNewsAsync()
+    {
+        var response = new List<NoticiaDetalheResponseDto>();
+
+        for (var year = 2000; year <= DateTime.Now.Year; year++)
+        {
+            var newsListing = await GetNewsListingByYearAsync(year);
+            
+            foreach (var newsEvent in newsListing)
+            {
+                var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(newsEvent);
+            
+                response.Add(detail);
+            }
+        }
+        return response;
+    }
+
+    public async Task<List<NoticiaDetalheResponseDto>> GetAllNewsAndPressReleasesAsync()
+    {
+        var allPressReleases = await GetAllPressReleasesAsync();
+
+        var allNews = await GetAllNewsAsync();
+
+        allPressReleases.AddRange(allNews);
+
+        return allPressReleases;
+    }
+
+    private async Task<List<NoticiaBancoCentralObtidaEvent>> GetPressReleasesListingByYearAsync(int ano)
     {
         var url = UrlsConfig.BancoCentralListagemNotasUrl;
 
@@ -62,7 +125,7 @@ public class BancoCentralService : IBancoCentralService
         return response;
     }
 
-    private async Task<List<NoticiaBancoCentralObtidaEvent>> ObterResultadosListagemPorAnoAsync(int ano)
+    private async Task<List<NoticiaBancoCentralObtidaEvent>> GetNewsListingByYearAsync(int ano)
     {
         var url = UrlsConfig.BancoCentralListagemUrl;
 

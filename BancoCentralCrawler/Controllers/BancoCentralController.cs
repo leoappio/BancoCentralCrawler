@@ -9,6 +9,7 @@ namespace BancoCentralCrawler.Controllers;
 public class BancoCentralController : ControllerBase
 {
     private readonly IBancoCentralService _bancoCentralService;
+
     public BancoCentralController(IBancoCentralService bancoCentralService)
     {
         _bancoCentralService = bancoCentralService;
@@ -21,28 +22,37 @@ public class BancoCentralController : ControllerBase
 
         return Ok(result);
     }
-        
+
     [HttpGet("GetTodasAsNoticias")]
-    public async Task<ActionResult<IEnumerable<NoticiaDetalheResponseDto>>> GetNoticiasAsync()
+    public async Task<ActionResult<IEnumerable<NoticiaDetalheResponseDto>>> GetAllNewsAsync()
     {
-        return Ok();
+        var result = await _bancoCentralService.GetAllNewsAsync();
+
+        return Ok(result);
     }
-        
+
     [HttpGet("GetNotasPorAno/{ano}")]
-    public async Task<ActionResult<IEnumerable<NoticiaDetalheResponseDto>>> GetNotasPorAnoAsync([FromRoute] int ano)
+    public async Task<ActionResult<IEnumerable<NoticiaDetalheResponseDto>>> GetPressReleasesByYearAsync(
+        [FromRoute] int ano)
     {
-        return Ok();
+        var result = await _bancoCentralService.GetPressReleasesByYearAsync(ano);
+
+        return Ok(result);
     }
-        
+
     [HttpGet("GetTodasAsNotas")]
-    public async Task<ActionResult<IEnumerable<NoticiaDetalheResponseDto>>> GetNotasAsync()
+    public async Task<ActionResult<IEnumerable<NoticiaDetalheResponseDto>>> GetAllPressReleasesAsync()
     {
-        return Ok();
+        var result = await _bancoCentralService.GetAllPressReleasesAsync();
+
+        return Ok(result);
     }
-        
+
     [HttpGet("GetTodasAsNotasENoticias")]
-    public async Task<ActionResult<IEnumerable<NoticiaDetalheResponseDto>>> GetTodasAsync()
+    public async Task<ActionResult<IEnumerable<NoticiaDetalheResponseDto>>> GetAllNewsAndPressReleasesAsync()
     {
-        return Ok();
+        var result = await _bancoCentralService.GetAllNewsAndPressReleasesAsync();
+
+        return Ok(result);
     }
 }

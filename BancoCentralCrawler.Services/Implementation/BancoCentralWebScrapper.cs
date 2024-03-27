@@ -8,7 +8,7 @@ namespace BancoCentralCrawler.Services.Implementation;
 
 public class BancoCentralWebScrapper : IBancoCentralWebScrapper
 {
-    public async Task<NoticiaDetalheResponseDto> ObterDetalhe(NoticiaBancoCentralObtidaEvent evento)
+    public async Task<NoticiaDetalheResponseDto> GetWebDetailAsync(NoticiaBancoCentralObtidaEvent evento)
     {
         var detalheApiUrl = evento.UrlOriginal.ToString().Contains("nota")
             ? UrlsConfig.BancoCentralDetalheNotasApiUrl

@@ -4,5 +4,5 @@ namespace BancoCentralCrawler.Services.Interfaces;
 
 public interface IBancoCentralWebScrapper
 {
-    Task<NoticiaDetalheResponseDto> ObterDetalhe(NoticiaBancoCentralObtidaEvent evento);
+    Task<NoticiaDetalheResponseDto> GetWebDetailAsync(NoticiaBancoCentralObtidaEvent evento);
 }
