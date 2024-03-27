@@ -8,6 +8,7 @@ public static class ApplicationConfiguration
 {
     public static void AddServices(this IServiceCollection services, IConfiguration configuration)
     {
+        services.AddScoped<IBancoCentralWebScrapper, BancoCentralWebScrapper>();
         services.AddScoped<IBancoCentralService, BancoCentralService>();
     }
 
