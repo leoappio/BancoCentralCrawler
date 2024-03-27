@@ -5,6 +5,10 @@ VisualStudioVersion = 17.9.34622.214
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BancoCentralCrawler", "BancoCentralCrawler\BancoCentralCrawler.csproj", "{611F02BC-2A56-484D-B114-990264BAE960}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BancoCentralCrawler.Services", "BancoCentralCrawler.Services\BancoCentralCrawler.Services.csproj", "{3662F660-26D0-4238-827E-87BD0CEF9996}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "BancoCentralCrawler.Domain", "BancoCentralCrawler.Domain\BancoCentralCrawler.Domain.csproj", "{FD144061-1F94-48D8-9F4D-3F9E134896B9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -15,6 +19,14 @@ Global
 		{611F02BC-2A56-484D-B114-990264BAE960}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{611F02BC-2A56-484D-B114-990264BAE960}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{611F02BC-2A56-484D-B114-990264BAE960}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3662F660-26D0-4238-827E-87BD0CEF9996}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3662F660-26D0-4238-827E-87BD0CEF9996}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3662F660-26D0-4238-827E-87BD0CEF9996}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3662F660-26D0-4238-827E-87BD0CEF9996}.Release|Any CPU.Build.0 = Release|Any CPU
+		{FD144061-1F94-48D8-9F4D-3F9E134896B9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{FD144061-1F94-48D8-9F4D-3F9E134896B9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{FD144061-1F94-48D8-9F4D-3F9E134896B9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{FD144061-1F94-48D8-9F4D-3F9E134896B9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
