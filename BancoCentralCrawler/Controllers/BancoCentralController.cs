@@ -16,7 +16,7 @@ public class BancoCentralController : ControllerBase
     }
 
     [HttpGet("GetNoticiasPorAno/{ano}")]
-    public async Task<ActionResult<IEnumerable<NoticiaDetalheResponseDto>>> GetNewsByYearAsync([FromRoute] int ano)
+    public async Task<ActionResult<IEnumerable<ExtractedDataDto>>> GetNewsByYearAsync([FromRoute] int ano)
     {
         var result = await _bancoCentralService.GetNewsByYearAsync(ano);
 
@@ -24,7 +24,7 @@ public class BancoCentralController : ControllerBase
     }
 
     [HttpGet("GetTodasAsNoticias")]
-    public async Task<ActionResult<IEnumerable<NoticiaDetalheResponseDto>>> GetAllNewsAsync()
+    public async Task<ActionResult<IEnumerable<ExtractedDataDto>>> GetAllNewsAsync()
     {
         var result = await _bancoCentralService.GetAllNewsAsync();
 
@@ -32,7 +32,7 @@ public class BancoCentralController : ControllerBase
     }
 
     [HttpGet("GetNotasPorAno/{ano}")]
-    public async Task<ActionResult<IEnumerable<NoticiaDetalheResponseDto>>> GetPressReleasesByYearAsync(
+    public async Task<ActionResult<IEnumerable<ExtractedDataDto>>> GetPressReleasesByYearAsync(
         [FromRoute] int ano)
     {
         var result = await _bancoCentralService.GetPressReleasesByYearAsync(ano);
@@ -41,7 +41,7 @@ public class BancoCentralController : ControllerBase
     }
 
     [HttpGet("GetTodasAsNotas")]
-    public async Task<ActionResult<IEnumerable<NoticiaDetalheResponseDto>>> GetAllPressReleasesAsync()
+    public async Task<ActionResult<IEnumerable<ExtractedDataDto>>> GetAllPressReleasesAsync()
     {
         var result = await _bancoCentralService.GetAllPressReleasesAsync();
 
@@ -49,7 +49,7 @@ public class BancoCentralController : ControllerBase
     }
 
     [HttpGet("GetTodasAsNotasENoticias")]
-    public async Task<ActionResult<IEnumerable<NoticiaDetalheResponseDto>>> GetAllNewsAndPressReleasesAsync()
+    public async Task<ActionResult<IEnumerable<ExtractedDataDto>>> GetAllNewsAndPressReleasesAsync()
     {
         var result = await _bancoCentralService.GetAllNewsAndPressReleasesAsync();
 

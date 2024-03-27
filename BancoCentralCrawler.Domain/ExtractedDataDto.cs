@@ -1,6 +1,6 @@
 ﻿namespace BancoCentralCrawler.Domain;
 
-public class NoticiaDetalheResponseDto
+public class ExtractedDataDto
 {
     public string Id { get; set; }
     public string Titulo { get; set; }
@@ -9,12 +9,12 @@ public class NoticiaDetalheResponseDto
     public string Conteudo { get; set; }
     public Uri UrlOriginal { get; set; }
     
-    public NoticiaDetalheResponseDto()
+    public ExtractedDataDto()
     {
 
     }
 
-    public NoticiaDetalheResponseDto(string id,
+    public ExtractedDataDto(string id,
         string titulo,
         DateTime data,
         string descricao,

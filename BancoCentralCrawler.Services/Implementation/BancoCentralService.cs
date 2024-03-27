@@ -15,11 +15,11 @@ public class BancoCentralService : IBancoCentralService
         _bancoCentralWebScrapper = bancoCentralWebScrapper;
     }
 
-    public async Task<List<NoticiaDetalheResponseDto>> GetNewsByYearAsync(int year)
+    public async Task<List<ExtractedDataDto>> GetNewsByYearAsync(int year)
     {
         var newsListing = await GetNewsListingByYearAsync(year);
 
-        var response = new List<NoticiaDetalheResponseDto>();
+        var response = new List<ExtractedDataDto>();
 
         foreach (var newsEvent in newsListing)
         {
@@ -31,15 +31,15 @@ public class BancoCentralService : IBancoCentralService
         return response;
     }
 
-    public async Task<List<NoticiaDetalheResponseDto>> GetPressReleasesByYearAsync(int year)
+    public async Task<List<ExtractedDataDto>> GetPressReleasesByYearAsync(int year)
     {
-        var newsListing = await GetPressReleasesListingByYearAsync(year);
+        var pressReleaseListing = await GetPressReleasesListingByYearAsync(year);
 
-        var response = new List<NoticiaDetalheResponseDto>();
+        var response = new List<ExtractedDataDto>();
 
-        foreach (var newsEvent in newsListing)
+        foreach (var pressReleaseEvent in pressReleaseListing)
         {
-            var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(newsEvent);
+            var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(pressReleaseEvent);
             
             response.Add(detail);
         }
@@ -47,17 +47,17 @@ public class BancoCentralService : IBancoCentralService
         return response;
     }
 
-    public async Task<List<NoticiaDetalheResponseDto>> GetAllPressReleasesAsync()
+    public async Task<List<ExtractedDataDto>> GetAllPressReleasesAsync()
     {
-        var response = new List<NoticiaDetalheResponseDto>();
+        var response = new List<ExtractedDataDto>();
 
         for (var year = 2000; year <= DateTime.Now.Year; year++)
         {
-            var newsListing = await GetPressReleasesListingByYearAsync(year);
+            var pressReleaseListing = await GetPressReleasesListingByYearAsync(year);
             
-            foreach (var newsEvent in newsListing)
+            foreach (var pressReleaseEvent in pressReleaseListing)
             {
-                var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(newsEvent);
+                var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(pressReleaseEvent);
             
                 response.Add(detail);
             }
@@ -65,9 +65,9 @@ public class BancoCentralService : IBancoCentralService
         return response;
     }
 
-    public async Task<List<NoticiaDetalheResponseDto>> GetAllNewsAsync()
+    public async Task<List<ExtractedDataDto>> GetAllNewsAsync()
     {
-        var response = new List<NoticiaDetalheResponseDto>();
+        var response = new List<ExtractedDataDto>();
 
         for (var year = 2000; year <= DateTime.Now.Year; year++)
         {
@@ -83,7 +83,7 @@ public class BancoCentralService : IBancoCentralService
         return response;
     }
 
-    public async Task<List<NoticiaDetalheResponseDto>> GetAllNewsAndPressReleasesAsync()
+    public async Task<List<ExtractedDataDto>> GetAllNewsAndPressReleasesAsync()
     {
         var allPressReleases = await GetAllPressReleasesAsync();
 
@@ -94,27 +94,27 @@ public class BancoCentralService : IBancoCentralService
         return allPressReleases;
     }
 
-    private async Task<List<NoticiaBancoCentralObtidaEvent>> GetPressReleasesListingByYearAsync(int ano)
+    private async Task<List<ObtainedNewsEvent>> GetPressReleasesListingByYearAsync(int ano)
     {
         var url = UrlsConfig.BancoCentralListagemNotasUrl;
 
-        var response = new List<NoticiaBancoCentralObtidaEvent>();
+        var response = new List<ObtainedNewsEvent>();
 
-        var urlAno = url.Replace("[ano]", ano.ToString());
+        var yearUrl = url.Replace("[ano]", ano.ToString());
 
-        var jsonLista = await CircuitBreakerHelper.TryNTimesAsync(() =>
-            WebHelper.GetAsync(urlAno, Encoding.UTF8), 5, 2000);
+        var itemsListing = await CircuitBreakerHelper.TryNTimesAsync(() =>
+            WebHelper.GetAsync(yearUrl, Encoding.UTF8), 5, 2000);
 
-        if (jsonLista is null)
+        if (itemsListing is null)
             return response;
 
-        var listaNotas = JsonConvert.DeserializeObject<dynamic>(jsonLista);
+        var pressReleaseListing = JsonConvert.DeserializeObject<dynamic>(itemsListing);
 
-        if (listaNotas is null || listaNotas.conteudo is null)
-            return response;;
+        if (pressReleaseListing is null || pressReleaseListing.conteudo is null)
+            return response;
 
-        foreach (var item in listaNotas.conteudo)
-            response.Add(new NoticiaBancoCentralObtidaEvent(
+        foreach (var item in pressReleaseListing.conteudo)
+            response.Add(new ObtainedNewsEvent(
                 id: Convert.ToInt32(item.Id),
                 urlOriginal: new Uri(new Uri(UrlsConfig.BancoCentralDetalheNotasUrl),
                     item.Url.ToString()),
@@ -125,27 +125,27 @@ public class BancoCentralService : IBancoCentralService
         return response;
     }
 
-    private async Task<List<NoticiaBancoCentralObtidaEvent>> GetNewsListingByYearAsync(int ano)
+    private async Task<List<ObtainedNewsEvent>> GetNewsListingByYearAsync(int ano)
     {
         var url = UrlsConfig.BancoCentralListagemUrl;
 
-        var response = new List<NoticiaBancoCentralObtidaEvent>();
+        var response = new List<ObtainedNewsEvent>();
 
-        var urlAno = url.Replace("[ano]", ano.ToString());
+        var yearUrl = url.Replace("[ano]", ano.ToString());
 
-        var jsonLista = await CircuitBreakerHelper.TryNTimesAsync(() =>
-            WebHelper.GetAsync(urlAno, Encoding.UTF8), 5, 2000);
+        var itemsListing = await CircuitBreakerHelper.TryNTimesAsync(() =>
+            WebHelper.GetAsync(yearUrl, Encoding.UTF8), 5, 2000);
 
-        if (jsonLista is null)
+        if (itemsListing is null)
             return response;
 
-        var listaNoticias = JsonConvert.DeserializeObject<dynamic>(jsonLista);
+        var newsListing = JsonConvert.DeserializeObject<dynamic>(itemsListing);
 
-        if (listaNoticias is null || listaNoticias.conteudo is null)
+        if (newsListing is null || newsListing.conteudo is null)
             return response;
 
-        foreach (var item in listaNoticias.conteudo)
-            response.Add(new NoticiaBancoCentralObtidaEvent(
+        foreach (var item in newsListing.conteudo)
+            response.Add(new ObtainedNewsEvent(
                 id: Convert.ToInt32(item.Id),
                 urlOriginal: new Uri(new Uri(UrlsConfig.BancoCentralDetalheUrl),
                     item.Url.ToString()),

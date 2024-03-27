@@ -1,6 +1,6 @@
 ﻿namespace BancoCentralCrawler.Domain;
 
-public class NoticiaBancoCentralObtidaEvent
+public class ObtainedNewsEvent
 {
     public int Id { get; set; }
 
@@ -12,7 +12,7 @@ public class NoticiaBancoCentralObtidaEvent
 
     public DateTime? DataDivulgacao { get; set; }
 
-    public NoticiaBancoCentralObtidaEvent(
+    public ObtainedNewsEvent(
         int id,
         DateTime dataModificacao,
         Uri urlOriginal,

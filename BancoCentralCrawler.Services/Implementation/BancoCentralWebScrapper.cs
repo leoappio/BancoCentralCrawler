@@ -8,41 +8,41 @@ namespace BancoCentralCrawler.Services.Implementation;
 
 public class BancoCentralWebScrapper : IBancoCentralWebScrapper
 {
-    public async Task<NoticiaDetalheResponseDto> GetWebDetailAsync(NoticiaBancoCentralObtidaEvent evento)
+    public async Task<ExtractedDataDto> GetWebDetailAsync(ObtainedNewsEvent evento)
     {
-        var detalheApiUrl = evento.UrlOriginal.ToString().Contains("nota")
+        var detailWebApi = evento.UrlOriginal.ToString().Contains("nota")
             ? UrlsConfig.BancoCentralDetalheNotasApiUrl
             : UrlsConfig.BancoCentralDetalheApiUrl;
 
-        var detalheUrl = evento.UrlOriginal.ToString().Contains("nota")
+        var detailUrl = evento.UrlOriginal.ToString().Contains("nota")
             ? UrlsConfig.BancoCentralDetalheNotasUrl
             : UrlsConfig.BancoCentralDetalheUrl;
 
         var urlApi =
-            detalheApiUrl.Replace("[id]", evento.Id.ToString());
+            detailWebApi.Replace("[id]", evento.Id.ToString());
 
-        var jsonNorma = await CircuitBreakerHelper.TryNTimesAsync(async () =>
+        var jsonData = await CircuitBreakerHelper.TryNTimesAsync(async () =>
             await WebHelper.GetAsync(urlApi, Encoding.UTF8), 5, 2000);
 
-        if (jsonNorma is null)
-            throw new ApplicationException("Detalhe da notícia não disponível.");
+        if (jsonData is null)
+            throw new ApplicationException("Detalhe não disponível.");
 
-        var detalheNoticia = JsonConvert.DeserializeObject<dynamic>(jsonNorma);
+        var itemDetail = JsonConvert.DeserializeObject<dynamic>(jsonData);
 
-        if (detalheNoticia is null || detalheNoticia.conteudo is null)
-            throw new ApplicationException("Detalhe da notícia não disponível.");
+        if (itemDetail is null || itemDetail.conteudo is null)
+            throw new ApplicationException("Detalhe não disponível.");
 
         var urlOriginal =
-            new Uri(detalheUrl.Replace("[id]",
+            new Uri(detailUrl.Replace("[id]",
                 evento.Id.ToString()));
 
-        return new NoticiaDetalheResponseDto
+        return new ExtractedDataDto
         {
-            Conteudo = detalheNoticia.conteudo[0].corpo,
-            Data = Convert.ToDateTime(detalheNoticia.conteudo[0].dataPublicacao),
-            Id = detalheNoticia.conteudo[0].Id,
-            Titulo = detalheNoticia.conteudo[0].titulo,
-            Descricao = detalheNoticia.conteudo[0].lead,
+            Conteudo = itemDetail.conteudo[0].corpo,
+            Data = Convert.ToDateTime(itemDetail.conteudo[0].dataPublicacao),
+            Id = itemDetail.conteudo[0].Id,
+            Titulo = itemDetail.conteudo[0].titulo,
+            Descricao = itemDetail.conteudo[0].lead,
             UrlOriginal = urlOriginal
         };
     }

@@ -4,9 +4,9 @@ namespace BancoCentralCrawler.Services.Interfaces;
 
 public interface IBancoCentralService
 {
-    Task<List<NoticiaDetalheResponseDto>> GetNewsByYearAsync(int year);
-    Task<List<NoticiaDetalheResponseDto>> GetPressReleasesByYearAsync(int year);
-    Task<List<NoticiaDetalheResponseDto>> GetAllPressReleasesAsync();
-    Task<List<NoticiaDetalheResponseDto>> GetAllNewsAsync();
-    Task<List<NoticiaDetalheResponseDto>> GetAllNewsAndPressReleasesAsync();
+    Task<List<ExtractedDataDto>> GetNewsByYearAsync(int year);
+    Task<List<ExtractedDataDto>> GetPressReleasesByYearAsync(int year);
+    Task<List<ExtractedDataDto>> GetAllPressReleasesAsync();
+    Task<List<ExtractedDataDto>> GetAllNewsAsync();
+    Task<List<ExtractedDataDto>> GetAllNewsAndPressReleasesAsync();
 }
