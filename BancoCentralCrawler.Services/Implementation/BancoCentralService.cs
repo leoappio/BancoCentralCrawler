@@ -1,11 +1,8 @@
 ﻿using BancoCentralCrawler.Domain;
-using BancoCentralCrawler.Services.Helpers;
 using BancoCentralCrawler.Services.Interfaces;
 using HtmlAgilityPack;
-using Newtonsoft.Json;
 using OpenQA.Selenium;
 using OpenQA.Selenium.Chrome;
-using System.Text;
 using System.Text.RegularExpressions;
 
 namespace BancoCentralCrawler.Services.Implementation;
@@ -102,29 +99,65 @@ public class BancoCentralService : IBancoCentralService
 
     private async Task<List<ObtainedNewsEvent>> GetPressReleasesListingByYearAsync(int ano)
     {
-        var url = UrlsConfig.BancoCentralListagemNotasUrl;
+        var bcbInitialPage = "https://www.bcb.gov.br";
 
         var response = new List<ObtainedNewsEvent>();
 
-        var yearUrl = url.Replace("[ano]", ano.ToString());
+        var options = new ChromeOptions();
+        options.AddArgument("--headless");
+        using var driver = new ChromeDriver(options);
 
-        var itemsListing = await CircuitBreakerHelper.TryNTimesAsync(() =>
-            WebHelper.GetAsync(yearUrl, Encoding.UTF8), 5, 2000);
+        driver.Navigate().GoToUrl(bcbInitialPage);
 
-        if (itemsListing is null)
+        var notasLinkNode = driver.FindElement(By.XPath("//a[contains(@href, '/noticias') and contains(text(), 'Mais notas à imprensa')]"));
+        ClickElement(driver, notasLinkNode);
+
+        await Task.Delay(2000);
+
+        var notasPorAnoLinkNode = driver.FindElement(By.XPath("//a[contains(@href, '/notasporano') and contains(@class, 'ver-todas')]"));
+        ClickElement(driver, notasPorAnoLinkNode);
+
+        await Task.Delay(2000);
+
+        var notasPorAnoUrl = $"{bcbInitialPage}/notasporano?ano={ano}";
+
+        driver.Navigate().GoToUrl(notasPorAnoUrl);
+
+        await Task.Delay(2000);
+
+        var pressReleasesByYearUrl = driver.PageSource;
+
+        if (string.IsNullOrEmpty(pressReleasesByYearUrl))
             return response;
 
-        var pressReleaseListing = JsonConvert.DeserializeObject<dynamic>(itemsListing);
+        var doc = new HtmlDocument();
+        doc.LoadHtml(pressReleasesByYearUrl);
 
-        if (pressReleaseListing is null || pressReleaseListing.conteudo is null)
+        var pressReleaseNodes = doc.DocumentNode.SelectNodes("//div[contains(@class, 'item-custom')]");
+        if (pressReleaseNodes == null)
             return response;
 
-        foreach (var item in pressReleaseListing.conteudo)
-            response.Add(new ObtainedNewsEvent(
-                id: Convert.ToInt32(item.Id),
-                urlOriginal: new Uri(new Uri(UrlsConfig.BancoCentralDetalheNotasUrl),
-                    item.Url.ToString()),
-                titulo: item.titulo.ToString()));
+        foreach (var node in pressReleaseNodes)
+        {
+            try
+            {
+                var tituloNode = node.SelectSingleNode(".//div[contains(@class, 'titulo')]/a");
+                var urlOriginal = new Uri(new Uri(bcbInitialPage), tituloNode.GetAttributeValue("href", ""));
+                var titulo = tituloNode?.InnerText.Trim();
+
+                var id = ExtractIdFromUrl(urlOriginal.ToString(), "nota");
+
+                response.Add(new ObtainedNewsEvent(
+                    id: id,
+                    urlOriginal: urlOriginal,
+                    titulo: titulo
+                ));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao processar nota à imprensa: {ex.Message}");
+            }
+        }
 
         return response;
     }
@@ -177,7 +210,7 @@ public class BancoCentralService : IBancoCentralService
                 var urlOriginal = new Uri(new Uri(bcbInitialPage), tituloNode.GetAttributeValue("href", ""));
                 var titulo = tituloNode?.InnerText.Trim();
 
-                var id = ExtractIdFromUrl(urlOriginal.ToString());
+                var id = ExtractIdFromUrl(urlOriginal.ToString(), "noticia");
 
                 response.Add(new ObtainedNewsEvent(
                     id: id,
@@ -207,9 +240,9 @@ public class BancoCentralService : IBancoCentralService
         }
     }
 
-    private int ExtractIdFromUrl(string url)
+    private int ExtractIdFromUrl(string url, string type)
     {
-        var match = Regex.Match(url, @"detalhenoticia/(\d+)/noticia");
+        var match = Regex.Match(url, @$"detalhenoticia/(\d+)/{type}");
         return match.Success ? int.Parse(match.Groups[1].Value) : 0;
     }
 }
