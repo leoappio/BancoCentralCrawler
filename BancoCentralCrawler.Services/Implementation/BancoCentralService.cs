@@ -1,8 +1,12 @@
-﻿using System.Text;
-using BancoCentralCrawler.Domain;
+﻿using BancoCentralCrawler.Domain;
 using BancoCentralCrawler.Services.Helpers;
 using BancoCentralCrawler.Services.Interfaces;
+using HtmlAgilityPack;
 using Newtonsoft.Json;
+using OpenQA.Selenium;
+using OpenQA.Selenium.Chrome;
+using System.Text;
+using System.Text.RegularExpressions;
 
 namespace BancoCentralCrawler.Services.Implementation;
 
@@ -24,7 +28,7 @@ public class BancoCentralService : IBancoCentralService
         foreach (var newsEvent in newsListing)
         {
             var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(newsEvent);
-            
+
             response.Add(detail);
         }
 
@@ -40,7 +44,7 @@ public class BancoCentralService : IBancoCentralService
         foreach (var pressReleaseEvent in pressReleaseListing)
         {
             var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(pressReleaseEvent);
-            
+
             response.Add(detail);
         }
 
@@ -54,14 +58,15 @@ public class BancoCentralService : IBancoCentralService
         for (var year = 2000; year <= DateTime.Now.Year; year++)
         {
             var pressReleaseListing = await GetPressReleasesListingByYearAsync(year);
-            
+
             foreach (var pressReleaseEvent in pressReleaseListing)
             {
                 var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(pressReleaseEvent);
-            
+
                 response.Add(detail);
             }
         }
+
         return response;
     }
 
@@ -72,14 +77,15 @@ public class BancoCentralService : IBancoCentralService
         for (var year = 2000; year <= DateTime.Now.Year; year++)
         {
             var newsListing = await GetNewsListingByYearAsync(year);
-            
+
             foreach (var newsEvent in newsListing)
             {
                 var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(newsEvent);
-            
+
                 response.Add(detail);
             }
         }
+
         return response;
     }
 
@@ -118,41 +124,92 @@ public class BancoCentralService : IBancoCentralService
                 id: Convert.ToInt32(item.Id),
                 urlOriginal: new Uri(new Uri(UrlsConfig.BancoCentralDetalheNotasUrl),
                     item.Url.ToString()),
-                titulo: item.titulo.ToString(),
-                dataDivulgacao: Convert.ToDateTime(item.DataPublicacao),
-                dataModificacao: Convert.ToDateTime(item.DataModificacao)));
+                titulo: item.titulo.ToString()));
 
         return response;
     }
 
-    private async Task<List<ObtainedNewsEvent>> GetNewsListingByYearAsync(int ano)
+    public async Task<List<ObtainedNewsEvent>> GetNewsListingByYearAsync(int ano)
     {
-        var url = UrlsConfig.BancoCentralListagemUrl;
+        var bcbInitialPage = "https://www.bcb.gov.br";
 
         var response = new List<ObtainedNewsEvent>();
 
-        var yearUrl = url.Replace("[ano]", ano.ToString());
+        var options = new ChromeOptions();
+        options.AddArgument("--headless");
+        using var driver = new ChromeDriver(options);
 
-        var itemsListing = await CircuitBreakerHelper.TryNTimesAsync(() =>
-            WebHelper.GetAsync(yearUrl, Encoding.UTF8), 5, 2000);
+        driver.Navigate().GoToUrl(bcbInitialPage);
 
-        if (itemsListing is null)
+        var noticiasLinkNode = driver.FindElement(By.XPath("//a[contains(@href, '/noticias') and contains(text(), 'Mais notas à imprensa')]"));
+        ClickElement(driver, noticiasLinkNode);
+
+        await Task.Delay(2000);
+
+        var noticiasPorAnoLinkNode = driver.FindElement(By.XPath("//a[contains(@href, '/noticiasporano') and contains(@class, 'mais-noticias')]"));
+        ClickElement(driver, noticiasPorAnoLinkNode);
+
+        await Task.Delay(2000);
+
+        var noticiasPorAnoUrl = $"{bcbInitialPage}/noticiasporano?ano={ano}";
+
+        driver.Navigate().GoToUrl(noticiasPorAnoUrl);
+
+        await Task.Delay(2000);
+
+        var newsByYearUrl = driver.PageSource;
+
+        if (string.IsNullOrEmpty(newsByYearUrl))
             return response;
 
-        var newsListing = JsonConvert.DeserializeObject<dynamic>(itemsListing);
+        var doc = new HtmlDocument();
+        doc.LoadHtml(newsByYearUrl);
 
-        if (newsListing is null || newsListing.conteudo is null)
+        var newsNodes = doc.DocumentNode.SelectNodes("//div[contains(@class, 'item-custom')]");
+        if (newsNodes == null)
             return response;
 
-        foreach (var item in newsListing.conteudo)
-            response.Add(new ObtainedNewsEvent(
-                id: Convert.ToInt32(item.Id),
-                urlOriginal: new Uri(new Uri(UrlsConfig.BancoCentralDetalheUrl),
-                    item.Url.ToString()),
-                titulo: item.titulo.ToString(),
-                dataDivulgacao: Convert.ToDateTime(item.DataPublicacao),
-                dataModificacao: Convert.ToDateTime(item.DataModificacao)));
+        foreach (var node in newsNodes)
+        {
+            try
+            {
+                var tituloNode = node.SelectSingleNode(".//div[contains(@class, 'titulo')]/a");
+                var urlOriginal = new Uri(new Uri(bcbInitialPage), tituloNode.GetAttributeValue("href", ""));
+                var titulo = tituloNode?.InnerText.Trim();
+
+                var id = ExtractIdFromUrl(urlOriginal.ToString());
+
+                response.Add(new ObtainedNewsEvent(
+                    id: id,
+                    urlOriginal: urlOriginal,
+                    titulo: titulo
+                ));
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Erro ao processar notícia: {ex.Message}");
+            }
+        }
 
         return response;
+    }
+
+    private void ClickElement(IWebDriver driver, IWebElement element)
+    {
+        try
+        {
+            element.Click();
+        }
+        catch (Exception)
+        {
+            IJavaScriptExecutor js = (IJavaScriptExecutor)driver;
+            js.ExecuteScript("arguments[0].click();", element);
+        }
+    }
+
+    private int ExtractIdFromUrl(string url)
+    {
+        var match = Regex.Match(url, @"detalhenoticia/(\d+)/noticia");
+        return match.Success ? int.Parse(match.Groups[1].Value) : 0;
     }
 }
