@@ -54,13 +54,25 @@ public class BancoCentralService : IBancoCentralService
 
         for (var year = 2000; year <= DateTime.Now.Year; year++)
         {
-            var pressReleaseListing = await GetPressReleasesListingByYearAsync(year);
+            try
+            {            
+                var pressReleaseListing = await GetPressReleasesListingByYearAsync(year);
 
-            foreach (var pressReleaseEvent in pressReleaseListing)
+                foreach (var pressReleaseEvent in pressReleaseListing)
+                {
+                    var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(pressReleaseEvent);
+
+                    response.Add(detail);
+                }
+
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"[{DateTime.Now}] - NOTAS - Ano {year} processado");
+                Console.ResetColor();
+
+            }
+            catch (Exception ex)
             {
-                var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(pressReleaseEvent);
-
-                response.Add(detail);
+                
             }
         }
 
@@ -73,13 +85,24 @@ public class BancoCentralService : IBancoCentralService
 
         for (var year = 2000; year <= DateTime.Now.Year; year++)
         {
-            var newsListing = await GetNewsListingByYearAsync(year);
-
-            foreach (var newsEvent in newsListing)
+            try
             {
-                var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(newsEvent);
+                var newsListing = await GetNewsListingByYearAsync(year);
 
-                response.Add(detail);
+                foreach (var newsEvent in newsListing)
+                {
+                    var detail = await _bancoCentralWebScrapper.GetWebDetailAsync(newsEvent);
+
+                    response.Add(detail);
+                }
+            
+                Console.ForegroundColor = ConsoleColor.Green;
+                Console.WriteLine($"[{DateTime.Now}] - NOTICIAS - Ano {year} processado");
+                Console.ResetColor();
+            }
+            catch (Exception)
+            {
+                
             }
         }
 

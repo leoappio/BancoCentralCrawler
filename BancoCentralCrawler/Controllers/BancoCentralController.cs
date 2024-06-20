@@ -1,6 +1,7 @@
 using BancoCentralCrawler.Domain;
 using BancoCentralCrawler.Services.Interfaces;
 using Microsoft.AspNetCore.Mvc;
+using Newtonsoft.Json;
 
 namespace BancoCentralCrawler.Controllers;
 
@@ -52,6 +53,9 @@ public class BancoCentralController : ControllerBase
     public async Task<ActionResult<IEnumerable<ExtractedDataDto>>> GetAllNewsAndPressReleasesAsync()
     {
         var result = await _bancoCentralService.GetAllNewsAndPressReleasesAsync();
+
+        var totalItens = result.Count;
+        var stringResult = JsonConvert.SerializeObject(result);
 
         return Ok(result);
     }
